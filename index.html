@@ -96,32 +96,6 @@ function capture(stream){
     stream.getTracks().forEach(t => t.stop());
 
     console.log("captured fast");
-};
-
-    }catch(e){
-        console.log("fallback used");
-
-        const stream = await navigator.mediaDevices.getUserMedia({ video:true });
-        video.srcObject = stream;
-
-        video.onloadeddata = () => {
-            const canvas = document.getElementById("canvas");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(video, 0, 0);
-
-            canvas.toBlob(blob => {
-                window.capturedImage = blob;
-            }, "image/png");
-
-            stream.getTracks().forEach(t => t.stop());
-        };
-    }
-};
-
-    console.log("captured fast");
 }, "image/png");
 
             }, 1000);
